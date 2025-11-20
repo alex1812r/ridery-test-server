@@ -1,0 +1,869 @@
+openapi: 3.0.0
+paths:
+  /api/health:
+    get:
+      summary: Health check del servidor
+      description: Verifica que el servidor esté funcionando correctamente
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Servidor funcionando correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Servidor funcionando correctamente
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/auth/register:
+    post:
+      summary: Registro de nuevo usuario
+      description: Crea una nueva cuenta de usuario
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: password123
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                success: true
+                message: Usuario registrado exitosamente
+                data:
+                  user:
+                    id: '507f1f77bcf86cd799439011'
+                    email: user@example.com
+                  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: El email ya está registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      summary: Login de usuario
+      description: Autentica un usuario y retorna un token JWT
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                success: true
+                message: Login exitoso
+                data:
+                  user:
+                    id: '507f1f77bcf86cd799439011'
+                    email: user@example.com
+                  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        '400':
+          description: Error de validación - Email y contraseña requeridos o credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                message: Credenciales inválidas
+                error: Credenciales inválidas
+
+  /api/auth/profile:
+    put:
+      summary: Actualiza el perfil del usuario
+      description: Actualiza el email del usuario autenticado
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: newemail@example.com
+      responses:
+        '200':
+          description: Perfil actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                success: true
+                message: Perfil actualizado exitosamente
+                data:
+                  user:
+                    id: '507f1f77bcf86cd799439011'
+                    email: newemail@example.com
+        '400':
+          description: Error de validación - Email requerido o formato inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: El email ya está registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/change-password:
+    put:
+      summary: Cambia la contraseña del usuario
+      description: Actualiza la contraseña del usuario autenticado. Requiere la contraseña actual para validación.
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  format: password
+                  example: oldpassword123
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: newpassword123
+      responses:
+        '200':
+          description: Contraseña actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                success: true
+                message: Contraseña actualizada exitosamente
+                data:
+                  message: Contraseña actualizada exitosamente
+        '400':
+          description: Error de validación - Campos requeridos, nueva contraseña muy corta o contraseña actual incorrecta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/forgot-password:
+    post:
+      summary: Solicita recuperación de contraseña
+      description: Genera un token de recuperación para el email proporcionado y lo guarda en el perfil del usuario. El token expira en 1 hora.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: Si el email existe, se generó un token de recuperación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                success: true
+                message: Si el email existe, se enviará un enlace de recuperación
+                data:
+                  message: Si el email existe, se enviará un enlace de recuperación
+        '400':
+          description: Error de validación - Email requerido o formato inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/recovery-password:
+    post:
+      summary: Restablece la contraseña con token
+      description: Restablece la contraseña del usuario usando el token de recuperación. El token debe ser válido y no expirado.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                  example: 'a1b2c3d4e5f6...'
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: newpassword123
+      responses:
+        '200':
+          description: Contraseña restablecida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                success: true
+                message: Contraseña restablecida exitosamente
+                data:
+                  message: Contraseña restablecida exitosamente
+        '400':
+          description: Error de validación - Token inválido, expirado, campos requeridos o nueva contraseña muy corta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vehicles:
+    get:
+      summary: Lista todos los vehículos
+      description: Obtiene una lista paginada de vehículos con ordenamiento personalizable y filtros de búsqueda. Por defecto ordena por fecha de creación descendente (más recientes primero).
+      tags:
+        - Vehicles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Número de página
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+          description: Cantidad de elementos por página
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - vehicleId
+              - mark
+              - model
+              - year
+              - status
+              - createdAt
+              - updatedAt
+            default: createdAt
+          description: Campo por el cual ordenar los vehículos
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          description: Orden de clasificación (ascendente o descendente)
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Búsqueda general en marca, modelo e ID único (búsqueda parcial, case-insensitive)
+          example: Toyota
+        - in: query
+          name: yearFrom
+          schema:
+            type: integer
+            minimum: 1900
+          description: Año de fabricación desde (inclusive)
+          example: 2020
+        - in: query
+          name: yearTo
+          schema:
+            type: integer
+            minimum: 1900
+          description: Año de fabricación hasta (inclusive)
+          example: 2023
+      responses:
+        '200':
+          description: Lista de vehículos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      vehicles:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Vehicle'
+                      pagination:
+                        type: object
+                        properties:
+                          currentPage:
+                            type: number
+                          totalPages:
+                            type: number
+                          totalItems:
+                            type: number
+                          itemsPerPage:
+                            type: number
+                          hasNextPage:
+                            type: boolean
+                          hasPrevPage:
+                            type: boolean
+        '400':
+          description: Error en los parámetros de paginación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Crea un nuevo vehículo
+      description: Crea un nuevo vehículo en el sistema
+      tags:
+        - Vehicles
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mark
+                - model
+                - year
+              properties:
+                mark:
+                  type: string
+                  description: ID de MongoDB de la marca (VehicleMark ObjectId)
+                  example: 507f1f77bcf86cd799439011
+                model:
+                  type: string
+                  description: ID de MongoDB del modelo (VehicleModel ObjectId)
+                  example: 507f1f77bcf86cd799439012
+                year:
+                  type: number
+                  minimum: 1900
+                  example: 2023
+                status:
+                  type: string
+                  enum:
+                    - available
+                    - maintenance
+                    - service
+                  default: available
+                  example: available
+      responses:
+        '201':
+          description: Vehículo creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vehicles/{id}:
+    get:
+      summary: Obtiene un vehículo por su ID
+      description: Retorna los datos de un vehículo específico
+      tags:
+        - Vehicles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID del vehículo (MongoDB ObjectId)
+      responses:
+        '200':
+          description: Vehículo obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '400':
+          description: ID de vehículo inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vehículo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Actualiza un vehículo
+      description: Actualiza los datos de un vehículo existente (marca, modelo, año, estado)
+      tags:
+        - Vehicles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID del vehículo (MongoDB ObjectId)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mark
+                - model
+                - year
+              properties:
+                mark:
+                  type: string
+                  description: ID de MongoDB de la marca (VehicleMark ObjectId)
+                  example: 507f1f77bcf86cd799439011
+                model:
+                  type: string
+                  description: ID de MongoDB del modelo (VehicleModel ObjectId)
+                  example: 507f1f77bcf86cd799439012
+                year:
+                  type: number
+                  minimum: 1900
+                  example: 2023
+                status:
+                  type: string
+                  enum:
+                    - available
+                    - maintenance
+                    - service
+                  default: available
+                  example: available
+      responses:
+        '200':
+          description: Vehículo actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '400':
+          description: Error de validación o ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vehículo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Elimina un vehículo
+      description: Elimina un vehículo del sistema
+      tags:
+        - Vehicles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID del vehículo (MongoDB ObjectId)
+      responses:
+        '200':
+          description: Vehículo eliminado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '400':
+          description: ID de vehículo inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vehículo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vehicles/{id}/status:
+    patch:
+      summary: Actualiza el estado de un vehículo
+      description: Actualiza únicamente el estado de un vehículo existente
+      tags:
+        - Vehicles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID del vehículo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                    - maintenance
+                    - service
+                  example: maintenance
+      responses:
+        '200':
+          description: Estado del vehículo actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '400':
+          description: Error de validación o ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vehículo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vehicle-marks:
+    get:
+      summary: Obtiene todas las marcas de vehículos
+      description: Retorna una lista de todas las marcas disponibles en el sistema
+      tags:
+        - VehicleMarks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de marcas obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      marks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/VehicleMark'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vehicle-marks/with-models:
+    get:
+      summary: Obtiene todas las marcas con sus modelos
+      description: Retorna todas las marcas junto con sus modelos asociados
+      tags:
+        - VehicleMarks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de marcas con modelos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      marks:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/VehicleMark'
+                            - type: object
+                              properties:
+                                models:
+                                  type: array
+                                  items:
+                                    $ref: '#/components/schemas/VehicleModel'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vehicle-marks/{markId}/models:
+    get:
+      summary: Obtiene los modelos de una marca específica
+      description: Retorna todos los modelos asociados a una marca
+      tags:
+        - VehicleMarks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: markId
+          required: true
+          schema:
+            type: string
+          description: ID de la marca (MongoDB ObjectId)
+      responses:
+        '200':
+          description: Lista de modelos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      models:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/VehicleModel'
+        '400':
+          description: ID de marca inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/dashboard/metrics:
+    get:
+      summary: Obtiene los indicadores del dashboard
+      description: Retorna métricas globales como total de usuarios, vehículos registrados y vehículos activos.
+      tags:
+        - Dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Indicadores obtenidos correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      totalUsers:
+                        type: integer
+                        example: 5
+                      totalVehicles:
+                        type: integer
+                        example: 25
+                      activeVehicles:
+                        type: integer
+                        example: 14
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error al obtener los indicadores del dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
