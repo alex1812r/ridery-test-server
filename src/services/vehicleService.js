@@ -84,6 +84,15 @@ export const listVehicles = async (
     }
   }
 
+  // Filtro por status
+  if (filters.status && filters.status.trim()) {
+    const validStatuses = ['available', 'maintenance', 'service'];
+    const status = filters.status.trim();
+    if (validStatuses.includes(status)) {
+      filterObject.status = status;
+    }
+  }
+
   // Convertir 'asc'/'desc' a 1/-1 para Mongoose
   const sortDirection = normalizedSortOrder === 'asc' ? 1 : -1;
 

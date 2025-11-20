@@ -19,7 +19,8 @@ export const listVehicles = async (req, res) => {
     const filters = {
       search: req.query.search,
       yearFrom: req.query.yearFrom,
-      yearTo: req.query.yearTo
+      yearTo: req.query.yearTo,
+      status: req.query.status
     };
 
     // Llamar al servicio para obtener los vehículos
