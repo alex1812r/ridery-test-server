@@ -232,7 +232,7 @@ SMTP_PASS=tu-contraseña-de-mailtrap-aquí
 SMTP_FROM=noreply@ridery.com
 
 # Frontend URL (para enlaces en correos)
-FRONTEND_URL=http://localhost:4173
+FRONTEND_URL=http://localhost:5173
 ```
 
 **Notas sobre variables de entorno:**
