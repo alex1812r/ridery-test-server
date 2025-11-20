@@ -233,6 +233,11 @@ SMTP_FROM=noreply@ridery.com
 
 # Frontend URL (para enlaces en correos)
 FRONTEND_URL=http://localhost:5173
+
+# CORS - URLs permitidas (separadas por comas)
+# En desarrollo, si no se define, se permiten todas las URLs
+# En producción, es obligatorio definir las URLs permitidas
+ALLOWED_ORIGINS=http://localhost:5173,https://mi-app.render.com,https://mi-usuario.github.io
 ```
 
 **Notas sobre variables de entorno:**
@@ -241,6 +246,7 @@ FRONTEND_URL=http://localhost:5173
 - `SMTP_PASS`: Reemplaza con tu contraseña real de Mailtrap
 - `JWT_SECRET`: Usa una clave segura y aleatoria en producción
 - `FRONTEND_URL`: Actualiza con la URL real de tu frontend en producción
+- `ALLOWED_ORIGINS`: URLs permitidas para CORS, separadas por comas. En desarrollo, si no se define, se permiten todas. En producción, es obligatorio definir las URLs de tus frontends desplegados (Render, GitHub Pages, etc.)
 
 3. **Asegurarse de que MongoDB esté corriendo**
 
